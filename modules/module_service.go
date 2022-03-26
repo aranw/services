@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/pkg/errors"
 
 	"github.com/aranw/services"
@@ -21,7 +19,6 @@ type moduleService struct {
 
 	service services.Service
 	name    string
-	logger  log.Logger
 
 	// startDeps, stopDeps return map of service names to services
 	startDeps, stopDeps func(string) map[string]services.Service
@@ -30,10 +27,9 @@ type moduleService struct {
 // NewModuleService wraps a module service, and makes sure that dependencies are started/stopped before module service starts or stops.
 // If any dependency fails to start, this service fails as well.
 // On stop, errors from failed dependencies are ignored.
-func NewModuleService(name string, logger log.Logger, service services.Service, startDeps, stopDeps func(string) map[string]services.Service) services.Service {
+func NewModuleService(name string, service services.Service, startDeps, stopDeps func(string) map[string]services.Service) services.Service {
 	w := &moduleService{
 		name:      name,
-		logger:    logger,
 		service:   service,
 		startDeps: startDeps,
 		stopDeps:  stopDeps,
@@ -51,8 +47,6 @@ func (w *moduleService) start(serviceContext context.Context) error {
 			continue
 		}
 
-		level.Debug(w.logger).Log("msg", "module waiting for initialization", "module", w.name, "waiting_for", m)
-
 		err := s.AwaitRunning(serviceContext)
 		if err != nil {
 			return fmt.Errorf("failed to start %v, because it depends on module %v, which has failed: %w", w.name, m, err)
@@ -61,7 +55,6 @@ func (w *moduleService) start(serviceContext context.Context) error {
 
 	// we don't want to let this service to stop until all dependant services are stopped,
 	// so we use independent context here
-	level.Info(w.logger).Log("msg", "initialising", "module", w.name)
 	err := w.service.StartAsync(context.Background())
 	if err != nil {
 		return errors.Wrapf(err, "error starting module: %s", w.name)
@@ -83,30 +76,22 @@ func (w *moduleService) stop(_ error) error {
 		// Only wait for other modules, if underlying service is still running.
 		w.waitForModulesToStop()
 
-		level.Debug(w.logger).Log("msg", "stopping", "module", w.name)
-
 		err = services.StopAndAwaitTerminated(context.Background(), w.service)
 	} else {
 		err = w.service.FailureCase()
 	}
 
-	if err != nil && err != ErrStopProcess {
-		level.Warn(w.logger).Log("msg", "module failed with error", "module", w.name, "err", err)
-	} else {
-		level.Info(w.logger).Log("msg", "module stopped", "module", w.name)
-	}
 	return err
 }
 
 func (w *moduleService) waitForModulesToStop() {
 	// wait until all stopDeps have stopped
 	stopDeps := w.stopDeps(w.name)
-	for n, s := range stopDeps {
+	for _, s := range stopDeps {
 		if s == nil {
 			continue
 		}
 
-		level.Debug(w.logger).Log("msg", "module waiting for", "module", w.name, "waiting_for", n)
 		// Passed context isn't canceled, so we can only get error here, if service
 		// fails. But we don't care *how* service stops, as long as it is done.
 		_ = s.AwaitTerminated(context.Background())

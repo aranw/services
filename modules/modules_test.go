@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-kit/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,7 +37,7 @@ func TestDependencies(t *testing.T) {
 		},
 	}
 
-	mm := NewManager(log.NewNopLogger())
+	mm := NewManager()
 	for name, mod := range testModules {
 		mm.RegisterModule(name, mod.initFn)
 	}
@@ -98,7 +97,7 @@ func TestManaged_AddDependency_ShouldErrorOnCircularDependencies(t *testing.T) {
 		},
 	}
 
-	mm := NewManager(log.NewNopLogger())
+	mm := NewManager()
 	for name, mod := range testModules {
 		mm.RegisterModule(name, mod.initFn)
 	}
@@ -127,7 +126,7 @@ func TestManaged_AddDependency_ShouldErrorIfModuleDoesNotExist(t *testing.T) {
 		},
 	}
 
-	mm := NewManager(log.NewNopLogger())
+	mm := NewManager()
 	for name, mod := range testModules {
 		mm.RegisterModule(name, mod.initFn)
 	}
@@ -143,7 +142,7 @@ func TestManaged_AddDependency_ShouldErrorIfModuleDoesNotExist(t *testing.T) {
 }
 
 func TestRegisterModuleDefaultsToUserVisible(t *testing.T) {
-	sut := NewManager(log.NewNopLogger())
+	sut := NewManager()
 	sut.RegisterModule("module1", mockInitFunc)
 
 	m := sut.modules["module1"]
@@ -156,7 +155,7 @@ func TestFunctionalOptAtTheEndWins(t *testing.T) {
 	userVisibleMod := func(option *module) {
 		option.userVisible = true
 	}
-	sut := NewManager(log.NewNopLogger())
+	sut := NewManager()
 	sut.RegisterModule("mod1", mockInitFunc, UserInvisibleModule, userVisibleMod, UserInvisibleModule)
 
 	m := sut.modules["mod1"]
@@ -166,7 +165,7 @@ func TestFunctionalOptAtTheEndWins(t *testing.T) {
 }
 
 func TestGetAllUserVisibleModulesNames(t *testing.T) {
-	sut := NewManager(log.NewNopLogger())
+	sut := NewManager()
 	sut.RegisterModule("userVisible3", mockInitFunc)
 	sut.RegisterModule("userVisible2", mockInitFunc)
 	sut.RegisterModule("userVisible1", mockInitFunc)
@@ -179,7 +178,7 @@ func TestGetAllUserVisibleModulesNames(t *testing.T) {
 }
 
 func TestGetAllUserVisibleModulesNamesHasNoDupWithDependency(t *testing.T) {
-	sut := NewManager(log.NewNopLogger())
+	sut := NewManager()
 	sut.RegisterModule("userVisible1", mockInitFunc)
 	sut.RegisterModule("userVisible2", mockInitFunc)
 	sut.RegisterModule("userVisible3", mockInitFunc)
@@ -193,7 +192,7 @@ func TestGetAllUserVisibleModulesNamesHasNoDupWithDependency(t *testing.T) {
 }
 
 func TestGetEmptyListWhenThereIsNoUserVisibleModule(t *testing.T) {
-	sut := NewManager(log.NewNopLogger())
+	sut := NewManager()
 	sut.RegisterModule("internal1", mockInitFunc, UserInvisibleModule)
 	sut.RegisterModule("internal2", mockInitFunc, UserInvisibleModule)
 	sut.RegisterModule("internal3", mockInitFunc, UserInvisibleModule)
@@ -207,7 +206,7 @@ func TestGetEmptyListWhenThereIsNoUserVisibleModule(t *testing.T) {
 func TestIsUserVisibleModule(t *testing.T) {
 	userVisibleModName := "userVisible"
 	internalModName := "internal"
-	sut := NewManager(log.NewNopLogger())
+	sut := NewManager()
 	sut.RegisterModule(userVisibleModName, mockInitFunc)
 	sut.RegisterModule(internalModName, mockInitFunc, UserInvisibleModule)
 
@@ -225,7 +224,7 @@ func TestIsModuleRegistered(t *testing.T) {
 	successModule := "successModule"
 	failureModule := "failureModule"
 
-	m := NewManager(log.NewNopLogger())
+	m := NewManager()
 	m.RegisterModule(successModule, mockInitFunc)
 
 	var result = m.IsModuleRegistered(successModule)
@@ -236,7 +235,7 @@ func TestIsModuleRegistered(t *testing.T) {
 }
 
 func TestManager_DependenciesForModule(t *testing.T) {
-	m := NewManager(log.NewNopLogger())
+	m := NewManager()
 	m.RegisterModule("test", nil)
 	m.RegisterModule("dep1", nil)
 	m.RegisterModule("dep2", nil)
@@ -251,7 +250,7 @@ func TestManager_DependenciesForModule(t *testing.T) {
 }
 
 func TestManager_inverseDependenciesForModule(t *testing.T) {
-	m := NewManager(log.NewNopLogger())
+	m := NewManager()
 	m.RegisterModule("test", nil)
 	m.RegisterModule("dep1", nil)
 	m.RegisterModule("dep2", nil)
@@ -298,7 +297,7 @@ func TestModuleWaitsForAllDependencies(t *testing.T) {
 		}, nil), nil
 	}
 
-	m := NewManager(log.NewNopLogger())
+	m := NewManager()
 	m.RegisterModule("A", initA)
 	m.RegisterModule("B", nil)
 	m.RegisterModule("C", initC)
