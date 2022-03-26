@@ -1,5 +1,7 @@
 # Services
 
+This is a copy of the [dskit/services](https://github.com/grafana/dskit) with a few changes
+
 This is a Go implementation of [services model](https://github.com/google/guava/wiki/ServiceExplained) from [Google Guava](https://github.com/google/guava) library.
 
 It provides `Service` interface (with implementation in `BasicService` type) and `Manager` for managing group of services at once.
