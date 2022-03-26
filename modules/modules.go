@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/pkg/errors"
-
 	"github.com/aranw/services"
 )
 
@@ -116,7 +114,7 @@ func (m *Manager) initModule(name string, initMap map[string]bool, servicesMap m
 		if mod.initFn != nil {
 			s, err := mod.initFn()
 			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error initialising module: %s", n))
+				return fmt.Errorf("initialising %s module failed: %w", n, err)
 			}
 
 			if s != nil {

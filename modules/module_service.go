@@ -2,9 +2,8 @@ package modules
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
-	"github.com/pkg/errors"
 
 	"github.com/aranw/services"
 )
@@ -57,7 +56,7 @@ func (w *moduleService) start(serviceContext context.Context) error {
 	// so we use independent context here
 	err := w.service.StartAsync(context.Background())
 	if err != nil {
-		return errors.Wrapf(err, "error starting module: %s", w.name)
+		return fmt.Errorf("starting module %s failed: %w", w.name, err)
 	}
 
 	return w.service.AwaitRunning(serviceContext)

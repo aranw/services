@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 // FailureWatcher waits for service failures, and passed them to the channel.
@@ -24,12 +24,12 @@ func (w *FailureWatcher) Chan() <-chan error {
 
 func (w *FailureWatcher) WatchService(service Service) {
 	service.AddListener(NewListener(nil, nil, nil, nil, func(from State, failure error) {
-		w.ch <- errors.Wrapf(failure, "service %s failed", DescribeService(service))
+		w.ch <- fmt.Errorf("service %s failed: %w", DescribeService(service), failure)
 	}))
 }
 
 func (w *FailureWatcher) WatchManager(manager *Manager) {
 	manager.AddListener(NewManagerListener(nil, nil, func(service Service) {
-		w.ch <- errors.Wrapf(service.FailureCase(), "service %s failed", DescribeService(service))
+		w.ch <- fmt.Errorf("service %s failed: %w", DescribeService(service), service.FailureCase())
 	}))
 }

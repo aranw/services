@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	e2 "github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,5 +30,5 @@ func TestServiceFailureWatcher(t *testing.T) {
 
 	e := <-w.Chan()
 	require.NotNil(t, e)
-	require.Equal(t, err, e2.Cause(e))
+	require.ErrorIs(t, e, err)
 }
